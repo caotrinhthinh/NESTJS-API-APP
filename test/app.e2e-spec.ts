@@ -71,4 +71,11 @@ describe('Auth E2E', () => {
       });
     });
   });
+
+  describe('Note', () => {
+    describe('Insert Note', () => {});
+    describe('Get all Notes', () => {});
+    describe('Get Note by Id', () => {});
+    describe('Delete Note by Id', () => {});
+  });
 });
