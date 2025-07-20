@@ -1,8 +1,10 @@
-import { PrismaService } from 'src/prisma/prisma.service';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { AuthDTO } from './dto';
 import { JwtService } from '@nestjs/jwt';
 import * as argon from 'argon2';
+import { PrismaService } from '../prisma/prisma.service';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable({})
 export class AuthService {
@@ -10,11 +12,10 @@ export class AuthService {
     private prismaService: PrismaService,
     private jwtService: JwtService,
   ) {}
+
   async register(authDTO: AuthDTO) {
     try {
-      //generate password to hashedPassword
       const hashed = await argon.hash(authDTO.password);
-      // insert data to database
       const user = await this.prismaService.user.create({
         data: {
           email: authDTO.email,
@@ -24,25 +25,21 @@ export class AuthService {
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { hashedPassword, updatedAt, ...result } = user;
-
       return result;
     } catch (error) {
-      console.log(error);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      if (error.code == 'P2002') {
-        throw new ForbiddenException('Error in credentials');
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ForbiddenException('Email already exists');
+        }
       }
+      throw error;
     }
   }
 
   async login(authDTO: AuthDTO) {
-    // find user with input email
     const user = await this.prismaService.user.findUnique({
-      where: {
-        email: authDTO.email,
-      },
+      where: { email: authDTO.email },
     });
 
     if (!user) {
@@ -55,8 +52,6 @@ export class AuthService {
     }
 
     const accessToken = await this.signToken(user.id, user.email);
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { hashedPassword, updatedAt, ...userInfo } = user;
 
     return {
