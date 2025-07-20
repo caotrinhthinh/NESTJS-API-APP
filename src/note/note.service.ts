@@ -16,9 +16,10 @@ export class NoteService {
     });
   }
 
-  async getNoteById(userId: number, noteId: number) {
+  async getNoteById(userId: number, noteId: string) {
+    const Id = parseInt(noteId, 10);
     const note = await this.prismaService.note.findUnique({
-      where: { id: noteId },
+      where: { id: Id },
     });
 
     if (!note) throw new NotFoundException('Note not found');

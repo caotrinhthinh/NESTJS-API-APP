@@ -67,15 +67,105 @@ describe('Auth E2E', () => {
           .withHeaders({
             Authorization: 'Bearer $S{accessToken}',
           })
-          .expectStatus(200);
+          .expectStatus(200)
+          .stores('userId', 'id');
+        // .inspect()
       });
     });
   });
 
   describe('Note', () => {
-    describe('Insert Note', () => {});
-    describe('Get all Notes', () => {});
-    describe('Get Note by Id', () => {});
-    describe('Delete Note by Id', () => {});
+    describe('Insert Note', () => {
+      it('should insert first note', () => {
+        return pactum
+          .spec()
+          .post('/notes')
+          .withHeaders({
+            Authorization: `Bearer $S{accessToken}`,
+          })
+          .withBody({
+            title: 'My first note',
+            description: 'Test note content 1',
+            url: 'https://example.com',
+          })
+          .expectStatus(201)
+          .stores('noteId1', 'id'); // Lưu id vào biến ${noteId1}
+      });
+
+      it('should insert second note', () => {
+        return pactum
+          .spec()
+          .post('/notes')
+          .withHeaders({ Authorization: `Bearer $S{accessToken}` })
+          .withBody({
+            title: 'My second note',
+            description: 'Test note content 2',
+            url: 'https://example.com/2',
+          })
+          .expectStatus(201)
+          .stores('noteId2', 'id');
+      });
+    });
+    describe('Get all Notes', () => {
+      it('should return notes for logged-in user', () => {
+        return pactum
+          .spec()
+          .get('/notes')
+          .withHeaders({
+            Authorization: `Bearer $S{accessToken}`,
+          })
+          .expectStatus(200)
+          .expectJsonLength(2);
+      });
+    });
+    describe('Get Note by Id', () => {
+      it('should return the note with specific id', () => {
+        return pactum
+          .spec()
+          .get('/notes/$S{noteId1}')
+          .withHeaders({
+            Authorization: `Bearer $S{accessToken}`,
+          })
+          .expectStatus(200)
+          .expectBodyContains('My first note');
+      });
+    });
+    describe('Update Note', () => {
+      it('should update the note', () => {
+        return pactum
+          .spec()
+          .patch('/notes/{id}')
+          .withPathParams('id', '$S{noteId1}')
+          .withHeaders({
+            Authorization: `Bearer $S{accessToken}`,
+          })
+          .withBody({
+            title: 'Updated title',
+          })
+          .expectStatus(200)
+          .expectBodyContains('Updated title');
+      });
+    });
+    describe('Delete Note by Id', () => {
+      it('should delete the note', () => {
+        return pactum
+          .spec()
+          .delete('/notes/$S{noteId1}')
+          .withHeaders({
+            Authorization: `Bearer $S{accessToken}`,
+          })
+          .expectStatus(204);
+      });
+
+      it('should return 404 when getting deleted note', () => {
+        return pactum
+          .spec()
+          .get('/notes/$S{noteId}')
+          .withHeaders({
+            Authorization: 'Bearer $S{accessToken}',
+          })
+          .expectStatus(404);
+      });
+    });
   });
 });

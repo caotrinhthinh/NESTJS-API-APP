@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -22,8 +24,8 @@ export class NoteController {
     return this.noteService.getNotes(userId);
   }
 
-  @Get(':id') // example: notes/123
-  getNoteById(@GetUser('id') userId: number, @Param('id') noteId: number) {
+  @Get(':noteId') // example: notes/123
+  getNoteById(@GetUser('id') userId: number, @Param('noteId') noteId: string) {
     return this.noteService.getNoteById(userId, noteId);
   }
 
@@ -35,15 +37,16 @@ export class NoteController {
     return this.noteService.insertNote(userId, insertNoteDTO);
   }
 
-  @Patch(':id')
+  @Patch(':noteId')
   updateNoteById(
     @GetUser('id') userId: number,
-    @Param('id') noteId: string,
+    @Param('noteId') noteId: string,
     @Body() updateNoteDTO: UpdateNoteDTO,
   ) {
     return this.noteService.updateNoteById(userId, noteId, updateNoteDTO);
   }
 
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
   deleteNoteBydId(@GetUser('id') userId: number, @Param('id') noteId: string) {
     return this.noteService.deleteNoteById(userId, noteId);
